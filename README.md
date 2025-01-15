@@ -1,360 +1,493 @@
 # Lab_04
+
 ## Цели работы:
-  1. Научиться синтаксису и принципам перегрузки операторов языка C#.
+  1. Научиться синтаксису и принципам работы с массивами средствами языка C#.
+  2. Научиться реализовывать интерфейсы IComparer<T> и IEnumerator<T>.
+  3. Получить практические навыки работы с оператором yield.
 
 ## Задание №1
-Создайте структуру Vector с тремя полями x, y и z. 
-Для созданной структуры переопределите операторы сложения векторов, умножения векторов, умножения вектора на число, а также логические операторы. Для логических операторов используйте сравнение по длине от начала координат.
+Создайте класс MyMatrix, представляющий матрицу m на n.
+Создайте конструктор, принимающий число строк и столбцов, заполняющий матрицу случайными числами в диапазоне, который пользователь вводит при запуске программы.
+Определите операторы сложения, вычитания и умножения матриц, а также умножения и деления матрицы на число.
+Создайте пользовательский индексатор матрицы для доступа к элементам матрицы по номеру строки и столбца.
 
 ## Задание №2
-Создайте класс Car со свойствами Name, Engine, MaxSpeed. Переопределите оператор ToString() таким образом, чтобы он возвращал название машины(Name). Реализуйте возможность сравнения объектов Car, реализовав интерфейс IEquatable<Car>. 
-Создайте класс CarsCatalog, содержащий коллекцию машин – элементов типа Car и переопределите для него индексатор таким образом, чтобы он возвращал строку с названием машины и типом двигателя.
+Создайте класс Car с тремя авто-свойствами: Name, ProductionYear и MaxSpeed, соответствующими названию, году выпуска и максимальной скорости соответственно.
+Создайте класс CarComparer : IComparer<Car> и реализуйте метод Compare таким образом, чтобы можно было сортировать массив элементов Car по названию, году выпуска или максимальной скорости по выбору.
+Создайте массив элементов Car и продемонстрируйте сортировку различными способами.
 
 ## Задание №3
-Создайте базовый класс Currency со свойством Value. Создайте 3 производных от Currency класса – CurrencyUSD, CurrencyEUR и CurrencyRUB со свойствами, соответствующими обменному курсу. В каждом из производных классов переопределите операторы преобразования типов таким образом, чтобы можно было явно или неявно преобразовать одну валюту в другую по курсу, заданному пользователем при запуске программы.
+Используйте класс Car из задания №2, на его основе создайте класс CarCatalog, содержащий массив элементов типа Car. 
+Для класса CarCatalog реализуйте возможность итерации по элементам массива Car с помощью оператора foreach различными способами: 
+Прямой проход с первого элемента до последнего.
+Обратный проход от последнего к первому.
+Проход по элементам массива с фильтром по году выпуска.
+Проход по элементам массива с фильтром по максимальной скорости.
 
-## Код задания № 1
+Примечание: для выполнения задания необходимо реализовать различные итераторы, используя конструкцию yield return. Для п.3 и 4, итератор должен принимать год выпуска и скорость как параметр, чтобы возвращать только те элементы коллекции, которые удовлетворяют условию.
+## Код задания №1
     using System;
     
-    struct Vector
+    public class MyMatrix
     {
-        public double x;
-        public double y;
-        public double z;
+        private int[,] data; // Двумерный массив для хранения элементов матрицы
+        private int rows; // Количество строк в матрице
+        private int columns; // Количество столбцов в матрице
     
-        public Vector(double x, double y, double z)
+        // Конструктор для инициализации матрицы с заданными размерами и заполнения случайными числами
+        public MyMatrix(int rows, int columns, int minValue, int maxValue)
         {
-            this.x = x;
-            this.y = y;
-            this.z = z;
+            this.rows = rows; // Установка количества строк
+            this.columns = columns; // Установка количества столбцов
+            data = new int[rows, columns]; // Инициализация двумерного массива
+            Random rand = new Random(); // Генератор случайных чисел
+    
+            // Заполнение матрицы случайными числами в заданном диапазоне
+            for (int i = 0; i < rows; i++)
+            {
+                for (int j = 0; j < columns; j++)
+                {
+                    data[i, j] = rand.Next(minValue, maxValue); // Генерация случайного числа
+                }
+            }
         }
     
-        // Переопределение оператора сложения векторов
-        public static Vector operator +(Vector v1, Vector v2)
+        // Индексатор для доступа к элементам матрицы по индексу строки и столбца
+        public int this[int row, int column]
         {
-            return new Vector(v1.x + v2.x, v1.y + v2.y, v1.z + v2.z);
+            get { return data[row, column]; } // Возврат элемента матрицы
+            set { data[row, column] = value; } // Установка значения элемента матрицы
         }
     
-        // Переопределение оператора умножения векторов (скалярное произведение)
-        public static double operator *(Vector v1, Vector v2)
+        // Перегрузка оператора сложения для суммирования двух матриц
+        public static MyMatrix operator +(MyMatrix a, MyMatrix b)
         {
-            return v1.x * v2.x + v1.y * v2.y + v1.z * v2.z;
+            // Проверка на соответствие размеров матриц
+            if (a.rows != b.rows || a.columns != b.columns)
+            {
+                Console.WriteLine("!!!ERROR!!! Matrices must have the same dimensions to add."); // Вывод ошибки
+                return null; // Возврат null в случае ошибки
+            }
+    
+            // Создание новой матрицы для результата
+            MyMatrix result = new MyMatrix(a.rows, a.columns, 0, 1);
+            for (int i = 0; i < a.rows; i++)
+            {
+                for (int j = 0; j < a.columns; j++)
+                {
+                    result[i, j] = a[i, j] + b[i, j]; // Суммирование элементов
+                }
+            }
+            return result; // Возврат результирующей матрицы
         }
     
-        // Переопределение оператора умножения вектора на число
-        public static Vector operator *(Vector v, double scalar)
+        // Перегрузка оператора вычитания для вычитания одной матрицы из другой
+        public static MyMatrix operator -(MyMatrix a, MyMatrix b)
         {
-            return new Vector(v.x * scalar, v.y * scalar, v.z * scalar);
+            // Проверка на соответствие размеров матриц
+            if (a.rows != b.rows || a.columns != b.columns)
+            {
+                Console.WriteLine("!!!ERROR!!! Matrices must have the same dimensions to subtract."); // Вывод ошибки
+                return null; // Возврат null в случае ошибки
+            }
+    
+            // Создание новой матрицы для результата
+            MyMatrix result = new MyMatrix(a.rows, a.columns, 0, 1);
+            for (int i = 0; i < a.rows; i++)
+            {
+                for (int j = 0; j < a.columns; j++)
+                {
+                    result[i, j] = a[i, j] - b[i, j]; // Вычитание элементов
+                }
+            }
+            return result; // Возврат результирующей матрицы
         }
     
-        // Переопределение оператора умножения числа на вектор
-        public static Vector operator *(double scalar, Vector v)
+        // Перегрузка оператора умножения матриц
+        public static MyMatrix operator *(MyMatrix a, MyMatrix b)
         {
-            return new Vector(v.x * scalar, v.y * scalar, v.z * scalar);
+            // Проверка на соответствие размеров для умножения
+            if (a.columns != b.rows)
+            {
+                Console.WriteLine("!!!ERROR!!! Number of columns in the first matrix must equal the number of rows in the second."); // Вывод ошибки
+                return null; // Возврат null в случае ошибки
+            }
+    
+            // Создание новой матрицы для результата
+            MyMatrix result = new MyMatrix(a.rows, b.columns, 0, 1);
+            for (int i = 0; i < a.rows; i++)
+            {
+                for (int j = 0; j < b.columns; j++)
+                {
+                    // Умножение матриц
+                    for (int k = 0; k < a.columns; k++)
+                    {
+                        result[i, j] += a[i, k] * b[k, j]; // Суммирование произведений для каждой ячейки результата
+                    }
+                }
+            }
+            return result; // Возврат результирующей матрицы
         }
     
-        // Вычисление длины вектора от начала координат
-        public double Length()
+        // Перегрузка оператора умножения матрицы на число
+        public static MyMatrix operator *(MyMatrix a, int scalar)
         {
-            return Math.Sqrt(x * x + y * y + z * z);
+            // Создание новой матрицы для результата
+            MyMatrix result = new MyMatrix(a.rows, a.columns, 0, 1);
+            for (int i = 0; i < a.rows; i++)
+            {
+                for (int j = 0; j < a.columns; j++)
+                {
+                    result[i, j] = a[i, j] * scalar; // Умножение каждого элемента на скаляр
+                }
+            }
+            return result; // Возврат результирующей матрицы
         }
     
-        // Переопределение оператора "равно" для сравнения длины векторов
-        public static bool operator ==(Vector v1, Vector v2)
+        // Перегрузка оператора деления матрицы на число
+        public static MyMatrix operator /(MyMatrix a, int scalar)
         {
-            return v1.Length() == v2.Length();
+            // Проверка деления на ноль
+            if (scalar == 0)
+            {
+                Console.WriteLine("!!!ERROR!!! Cannot divide by zero."); // Вывод ошибки
+                return null; // Возврат null в случае ошибки
+            }
+    
+            // Создание новой матрицы для результата
+            MyMatrix result = new MyMatrix(a.rows, a.columns, 0, 1);
+            for (int i = 0; i < a.rows; i++)
+            {
+                for (int j = 0; j < a.columns; j++)
+                {
+                    result[i, j] = a[i, j] / scalar; // Деление каждого элемента на скаляр
+                }
+            }
+            return result; // Возврат результирующей матрицы
         }
     
-        // Переопределение оператора "не равно" для сравнения длины векторов
-        public static bool operator !=(Vector v1, Vector v2)
+        // Метод для вывода матрицы на консоль
+        public void Print()
         {
-            return !(v1 == v2);
-        }
-    
-        // Переопределение оператора "меньше" для сравнения длины векторов
-        public static bool operator <(Vector v1, Vector v2)
-        {
-            return v1.Length() < v2.Length();
-        }
-    
-        // Переопределение оператора "больше" для сравнения длины векторов
-        public static bool operator >(Vector v1, Vector v2)
-        {
-            return v1.Length() > v2.Length();
-        }
-    
-        // Переопределение оператора "меньше или равно" для сравнения длины векторов
-        public static bool operator <=(Vector v1, Vector v2)
-        {
-            return v1.Length() <= v2.Length();
-        }
-    
-        // Переопределение оператора "больше или равно" для сравнения длины векторов
-        public static bool operator >=(Vector v1, Vector v2)
-        {
-            return v1.Length() >= v2.Length();
-        }
-    
-        public override string ToString()
-        {
-            return $"Vector({x}, {y}, {z})";
+            for (int i = 0; i < rows; i++)
+            {
+                for (int j = 0; j < columns; j++)
+                {
+                    Console.Write(data[i, j] + "\t"); // Вывод элемента с табуляцией
+                }
+                Console.WriteLine(); // Переход на следующую строку
+            }
         }
     }
     
+    // Пример использования класса MyMatrix
+    public class Program
+    {
+        public static void Main()
+        {
+            // Ввод размеров матрицы
+            Console.WriteLine("Введите количество строк и столбцов матрицы:");
+            int rows = Convert.ToInt32(Console.ReadLine());
+            int columns = Convert.ToInt32(Console.ReadLine()); 
+    
+            // Ввод диапазона для случайных чисел
+            Console.WriteLine("Введите минимальное и максимальное значения для заполнения матрицы:");
+            int minValue = Convert.ToInt32(Console.ReadLine()); 
+            int maxValue = Convert.ToInt32(Console.ReadLine());
+    
+            // Создание двух матриц с случайными числами
+            MyMatrix matrixA = new MyMatrix(rows, columns, minValue, maxValue);
+            MyMatrix matrixB = new MyMatrix(rows, columns, minValue, maxValue);
+    
+            // Вывод матриц A и B
+            Console.WriteLine("Матрица A:");
+            matrixA.Print();
+            Console.WriteLine("Матрица B:");
+            matrixB.Print();
+    
+            // Сложение матриц A и B
+            MyMatrix sum = matrixA + matrixB;
+            if (sum != null) // Проверка на null
+            {
+                Console.WriteLine("Сумма A и B:");
+                sum.Print();
+            }
+    
+            // Вычитание матриц A и B
+            MyMatrix difference = matrixA - matrixB;
+            if (difference != null) // Проверка на null
+            {
+                Console.WriteLine("Разность A и B:");
+                difference.Print();
+            }
+    
+            // Пример умножения матриц
+            MyMatrix matrixC = new MyMatrix(columns, rows, minValue, maxValue); // Размеры должны быть совместимы для умножения
+            Console.WriteLine("Матрица C:");
+            matrixC.Print();
+    
+            // Умножение матриц A и C
+            MyMatrix product = matrixA * matrixC;
+            if (product != null) // Проверка на null
+            {
+                Console.WriteLine("Произведение A и C:");
+                product.Print();
+            }
+    
+            // Умножение и деление матрицы A на число
+            int scalar = 2;
+            MyMatrix multiplied = matrixA * scalar; // Умножение на скаляр
+            Console.WriteLine($"Матрица A, умноженная на {scalar}:");
+            multiplied.Print();
+    
+            MyMatrix divided = matrixA / scalar; // Деление на скаляр
+            Console.WriteLine($"Матрица A, деленная на {scalar}:");
+            divided.Print();
+        }
+    }
+## Код задания №2
+    using System;
+    using System.Collections.Generic;
+    
+    // Класс Car представляет автомобиль с тремя свойствами: название, год выпуска и максимальная скорость
+    public class Car
+    {
+        public string Name { get; set; } // Название автомобиля
+        public int ProductionYear { get; set; } // Год выпуска автомобиля
+        public int MaxSpeed { get; set; } // Максимальная скорость автомобиля
+    
+        // Конструктор для инициализации свойств
+        public Car(string name, int productionYear, int maxSpeed)
+        {
+            Name = name;
+            ProductionYear = productionYear;
+            MaxSpeed = maxSpeed;
+        }
+    
+        // Переопределение метода ToString для удобного отображения информации об автомобиле
+        public override string ToString()
+        {
+            return $"Name: {Name}, Year: {ProductionYear}, Max Speed: {MaxSpeed}";
+        }
+    }
+    
+    // Класс CarComparer реализует интерфейс IComparer<Car> для сортировки автомобилей
+    public class CarComparer : IComparer<Car> // Интерфейс, для сравнения
+    {
+        // Перечисление, определяющее критерии сортировки
+        public enum SortCriteria // Определяем три возможных критерия сортировки для автомобилей
+        {
+            ByName,            // Сортировка по названию
+            ByProductionYear,  // Сортировка по году выпуска
+            ByMaxSpeed         // Сортировка по максимальной скорости
+        }
+    
+        private SortCriteria sortCriteria; // Переменная для хранения текущего критерия сортировки
+    
+        // Конструктор для установки критерия сортировки
+        public CarComparer(SortCriteria criteria)
+        {
+            sortCriteria = criteria;
+        }
+    
+        // Метод Compare для сравнения двух автомобилей в зависимости от выбранного критерия
+        public int Compare(Car x, Car y)
+        {
+            switch (sortCriteria)
+            {
+                case SortCriteria.ByName:
+                    return x.Name.CompareTo(y.Name); // Сравнение по названию
+                case SortCriteria.ByProductionYear:
+                    return x.ProductionYear.CompareTo(y.ProductionYear); // Сравнение по году выпуска
+                case SortCriteria.ByMaxSpeed:
+                    return x.MaxSpeed.CompareTo(y.MaxSpeed); // Сравнение по максимальной скорости
+                default:
+                    Console.WriteLine("!!!ERROR!!! Invalid sort criteria"); // Вывод сообщения об ошибке
+                    return 0; // Возвращаем 0, чтобы не прерывать сортировку
+            }
+        }
+    }
     
     class Program
     {
         static void Main(string[] args)
         {
-            // Создание двух векторов
-            Vector v1 = new Vector(3, 4, 0);
-            Vector v2 = new Vector(1, 2, 2);
+            Car[] cars = {
+                new Car("Ferrari", 2015, 250),
+                new Car("Skoda", 2018, 200),
+                new Car("BMW", 2023, 240),
+                new Car("Audi", 2020, 220)
+            };
     
-            // Проверка операции сложения
-            Vector sum = v1 + v2;
-            Console.WriteLine($"Сложение: {v1} + {v2} = {sum}");
-    
-            // Проверка скалярного произведения
-            double dotProduct = v1 * v2;
-            Console.WriteLine($"Скалярное произведение: {v1} * {v2} = {dotProduct}");
-    
-            // Проверка умножения вектора на число
-            double scalar = 2;
-            Vector scaledVector = v1 * scalar;
-            Console.WriteLine($"Умножение вектора на число: {v1} * {scalar} = {scaledVector}");
-    
-            // Проверка умножения числа на вектор
-            Vector scaledVector2 = scalar * v2;
-            Console.WriteLine($"Умножение числа на вектор: {scalar} * {v2} = {scaledVector2}");
-    
-            // Проверка логических операторов
-            Console.WriteLine($"Длина вектора {v1} = {v1.Length()}");
-            Console.WriteLine($"Длина вектора {v2} = {v2.Length()}");
-    
-            Console.WriteLine($"{v1} == {v2}: {v1 == v2}");
-            Console.WriteLine($"{v1} != {v2}: {v1 != v2}");
-            Console.WriteLine($"{v1} > {v2}: {v1 > v2}");
-            Console.WriteLine($"{v1} < {v2}: {v1 < v2}");
-            Console.WriteLine($"{v1} >= {v2}: {v1 >= v2}");
-            Console.WriteLine($"{v1} <= {v2}: {v1 <= v2}");
-        }
-    }
-## Код задания № 2
-    using System;
-    using System.Collections.Generic; // Используем чтобы создать коллекцию List<Car>
-    
-    // Класс Car, реализующий интерфейс IEquatable<Car>
-    public class Car : IEquatable<Car>
-    {
-        // Свойства Name, Engine, MaxSpeed
-        public string Name { get; set; }
-        public string Engine { get; set; }
-        public int MaxSpeed { get; set; }
-    
-        // Конструктор для инициализации свойств
-        public Car(string name, string engine, int maxSpeed)
-        {
-            Name = name;
-            Engine = engine;
-            MaxSpeed = maxSpeed;
-        }
-    
-        // Переопределение метода ToString()
-        public override string ToString()
-        {
-            return Name;
-        }
-    
-        // Реализация интерфейса IEquatable<Car>
-        public bool Equals(Car other)
-        {
-            if (other == null) return false;
-            return this.Name == other.Name && this.Engine == other.Engine && this.MaxSpeed == other.MaxSpeed;
-        }
-    
-        // Переопределение метода Equals для класса Object (чтобы сравнивать не по ссылке в памяти, а по значениям)
-        public override bool Equals(object obj)
-        {
-            if (obj == null || !(obj is Car)) return false;
-            return Equals((Car)obj);
-        }
-    }
-    
-    // Класс CarsCatalog с коллекцией машин и индексатором
-    public class CarsCatalog
-    {
-        // Коллекция машин
-        private List<Car> cars = new List<Car>();
-    
-        // Метод для добавления машин в каталог
-        public void AddCar(Car car)
-        {
-            cars.Add(car);
-        }
-    
-        // Индексатор, возвращающий строку с названием машины и типом двигателя
-        public string this[int index]
-        {
-            get
+            Console.WriteLine("Original array:");
+            // Выводим исходный массив
+            for (int i = 0; i < cars.Length; i++)
             {
-                if (index < 0 || index >= cars.Count)
-                    throw new IndexOutOfRangeException("Invalid index");
+                Console.WriteLine(cars[i]);
+            }
     
-                Car car = cars[index];
-                return $"Name: {car.Name}, Engine: {car.Engine}";
+            // Сортировка по имени
+            Array.Sort(cars, new CarComparer(CarComparer.SortCriteria.ByName));
+            Console.WriteLine("\nSorted by Name:");
+            // Выводим отсортированный массив
+            for (int i = 0; i < cars.Length; i++)
+            {
+                Console.WriteLine(cars[i]); 
+            }
+    
+            // Сортировка по году выпуска
+            Array.Sort(cars, new CarComparer(CarComparer.SortCriteria.ByProductionYear));
+            Console.WriteLine("\nSorted by Production Year:");
+            // Выводим отсортированный массив
+            for (int i = 0; i < cars.Length; i++)
+            {
+                Console.WriteLine(cars[i]); 
+            }
+    
+            // Сортировка по максимальной скорости
+            Array.Sort(cars, new CarComparer(CarComparer.SortCriteria.ByMaxSpeed));
+            Console.WriteLine("\nSorted by Max Speed:");
+            // Выводим отсортированный массив
+            for (int i = 0; i < cars.Length; i++)
+            {
+                Console.WriteLine(cars[i]); 
             }
         }
     }
-    
-    // Пример использования
-    class Program
-    {
-        static void Main()
-        {
-            // Создание машин
-            Car car1 = new Car("Ferrari", "V8", 350);
-            Car car2 = new Car("BMW", "V12", 370);
-    
-            // Создание каталога машин и добавление в него машин
-            CarsCatalog catalog = new CarsCatalog();
-            catalog.AddCar(car1);
-            catalog.AddCar(car2);
-    
-            // Использование индексатора для получения информации о машине
-            Console.WriteLine(catalog[0]);
-            Console.WriteLine(catalog[1]);
-    
-            // Сравнение объектов Car
-            Console.WriteLine($"car1 = car2: {car1.Equals(car2)}");
-        }
-    }
-## Код задания № 3
+## Код задания №3
     using System;
+    using System.Collections;
+    using System.Collections.Generic;
     
-    // Базовый класс для представления валюты
-    public class Currency
+    // Класс Car представляет автомобиль с тремя свойствами: название, год выпуска и максимальная скорость
+    public class Car
     {
-        // Свойство, представляющее значение валюты
-        public double Value { get; set; }
+        public string Name { get; set; } // Название автомобиля
+        public int ProductionYear { get; set; } // Год выпуска автомобиля
+        public int MaxSpeed { get; set; } // Максимальная скорость автомобиля
     
-        // Конструктор, инициализирующий значение валюты
-        public Currency(double value)
+        // Конструктор для инициализации свойств
+        public Car(string name, int productionYear, int maxSpeed)
         {
-            Value = value;
+            Name = name;
+            ProductionYear = productionYear;
+            MaxSpeed = maxSpeed;
         }
     
-        // Переопределение ToString для отображения значения валюты
-        public override string ToString() => Value.ToString("F2"); // Форматирование до 2 знаков после запятой
-    }
-    
-    // Класс для представления валюты USD
-    public class CurrencyUSD : Currency
-    {
-        public CurrencyUSD(double value) : base(value) { }
-    
-        // Явное преобразование USD в EUR
-        public static explicit operator CurrencyEUR(CurrencyUSD usd)
+        // Переопределение метода ToString для удобного отображения информации об автомобиле
+        public override string ToString()
         {
-            double exchangeRate = CurrencyExchangeRates.ExchangeRateUSDToEUR;
-            return new CurrencyEUR(usd.Value * exchangeRate);
-        }
-    
-        // Неявное преобразование USD в RUB
-        public static implicit operator CurrencyRUB(CurrencyUSD usd)
-        {
-            double exchangeRate = CurrencyExchangeRates.ExchangeRateUSDToRUB;
-            return new CurrencyRUB(usd.Value * exchangeRate);
+            return $"Name: {Name}, Year: {ProductionYear}, Max Speed: {MaxSpeed}";
         }
     }
     
-    // Класс для представления валюты EUR
-    public class CurrencyEUR : Currency
+    // Класс CarCatalog для хранения массива автомобилей и реализации различных итераторов
+    public class CarCatalog : IEnumerable<Car> // Интерфейс, который позволяет перебирать коллекцию
     {
-        public CurrencyEUR(double value) : base(value) { }
+        private Car[] cars; // Массив автомобилей
     
-        // Явное преобразование EUR в USD
-        public static explicit operator CurrencyUSD(CurrencyEUR eur)
+        // Конструктор для инициализации массива автомобилей
+        public CarCatalog(Car[] cars)
         {
-            double exchangeRate = CurrencyExchangeRates.ExchangeRateEURToUSD;
-            return new CurrencyUSD(eur.Value * exchangeRate);
+            this.cars = cars;
         }
     
-        // Неявное преобразование EUR в RUB
-        public static implicit operator CurrencyRUB(CurrencyEUR eur)
+        // Итератор для прямого прохода по массиву
+        public IEnumerator<Car> GetEnumerator()
         {
-            double exchangeRate = CurrencyExchangeRates.ExchangeRateEURToRUB;
-            return new CurrencyRUB(eur.Value * exchangeRate);
+            for (int i = 0; i < cars.Length; i++)
+            {
+                yield return cars[i]; // yield - метод, который может возвращать последовательность значений
+            }
+        }
+    
+        // Итератор для обратного прохода по массиву
+        public IEnumerable<Car> ReverseIterator()
+        {
+            for (int i = cars.Length - 1; i >= 0; i--)
+            {
+                yield return cars[i]; // yield - метод, который может возвращать последовательность значений
+            }
+        }
+    
+        // Итератор с фильтром по году выпуска
+        public IEnumerable<Car> FilterByYear(int year)
+        {
+            foreach (var car in cars)
+            {
+                if (car.ProductionYear == year)
+                {
+                    yield return car; // yield - метод, который может возвращать последовательность значений
+                }
+            }
+        }
+    
+        // Итератор с фильтром по максимальной скорости
+        public IEnumerable<Car> FilterByMaxSpeed(int maxSpeed)
+        {
+            foreach (var car in cars)
+            {
+                if (car.MaxSpeed == maxSpeed)
+                {
+                    yield return car; // yield - метод, который может возвращать последовательность значений
+                }
+            }
+        }
+    
+        // Реализация IEnumerable для поддержки foreach (метод для использования класса CarCatalog в foreach циклах)
+        IEnumerator IEnumerable.GetEnumerator()
+        {
+            return GetEnumerator();
         }
     }
     
-    // Класс для представления валюты RUB
-    public class CurrencyRUB : Currency
-    {
-        public CurrencyRUB(double value) : base(value) { }
-    
-        // Явное преобразование RUB в USD
-        public static explicit operator CurrencyUSD(CurrencyRUB rub)
-        {
-            double exchangeRate = CurrencyExchangeRates.ExchangeRateRUBToUSD;
-            return new CurrencyUSD(rub.Value * exchangeRate);
-        }
-    
-        // Неявное преобразование RUB в EUR
-        public static implicit operator CurrencyEUR(CurrencyRUB rub)
-        {
-            double exchangeRate = CurrencyExchangeRates.ExchangeRateRUBToEUR;
-            return new CurrencyEUR(rub.Value * exchangeRate);
-        }
-    }
-    
-    // Класс для хранения обменных курсов
-    public static class CurrencyExchangeRates
-    {
-        public static double ExchangeRateUSDToEUR { get; set; }
-        public static double ExchangeRateUSDToRUB { get; set; }
-        public static double ExchangeRateEURToUSD { get; set; }
-        public static double ExchangeRateEURToRUB { get; set; }
-        public static double ExchangeRateRUBToUSD { get; set; }
-        public static double ExchangeRateRUBToEUR { get; set; }
-    }
-    
-    // Основной класс программы
     class Program
     {
-        static void Main()
+        static void Main(string[] args)
         {
-            // Запрос обменных курсов у пользователя
-            Console.WriteLine("Вводите курс через ',' например: 0,86");
-            Console.WriteLine("Введите курс USD к EUR:");
-            CurrencyExchangeRates.ExchangeRateUSDToEUR = Convert.ToDouble(Console.ReadLine());
+            Car[] cars = {
+                new Car("Ferrari", 2015, 250),
+                new Car("Skoda", 2018, 200),
+                new Car("BMW", 2023, 240),
+                new Car("Audi", 2020, 220)
+            };
     
-            Console.WriteLine("Введите курс USD к RUB:");
-            CurrencyExchangeRates.ExchangeRateUSDToRUB = Convert.ToDouble(Console.ReadLine());
+            // Создаем каталог автомобилей
+            CarCatalog carCatalog = new CarCatalog(cars);
     
-            Console.WriteLine("Введите курс EUR к USD:");
-            CurrencyExchangeRates.ExchangeRateEURToUSD = Convert.ToDouble(Console.ReadLine());
+            // Прямой проход
+            Console.WriteLine("Direct iteration using foreach:");
+            foreach (var car in carCatalog)
+            {
+                Console.WriteLine(car);
+            }
+            Console.WriteLine("\nDirect iteration using GetEnumerator():");
+            IEnumerator<Car> enumerator = carCatalog.GetEnumerator(); // Интерфейс для перебора + метод для поочередного перебора элементов carCatalog
+            while (enumerator.MoveNext()) // Movenext() - метод, который передвигает курсор на следующий элемент коллекции
+            {
+                Console.WriteLine(enumerator.Current); // Свойство, которое возвращает текущий элемент коллекции на котором сейчас находится enumerator
+            }
     
-            Console.WriteLine("Введите курс EUR к RUB:");
-            CurrencyExchangeRates.ExchangeRateEURToRUB = Convert.ToDouble(Console.ReadLine());
+            // Обратный проход
+            Console.WriteLine("\nReverse iteration:");
+            foreach (var car in carCatalog.ReverseIterator())
+            {
+                Console.WriteLine(car);
+            }
     
-            Console.WriteLine("Введите курс RUB к USD:");
-            CurrencyExchangeRates.ExchangeRateRUBToUSD = Convert.ToDouble(Console.ReadLine());
+            // Проход с фильтром по году выпуска
+            Console.WriteLine("\nFilter by Production Year (2018):");
+            foreach (var car in carCatalog.FilterByYear(2018))
+            {
+                Console.WriteLine(car);
+            }
     
-            Console.WriteLine("Введите курс RUB к EUR:");
-            CurrencyExchangeRates.ExchangeRateRUBToEUR = Convert.ToDouble(Console.ReadLine());
-    
-            // Примеры преобразования валют
-            CurrencyUSD usd = new CurrencyUSD(100);
-            Console.WriteLine($"Явное преобразование 100 USD в EUR: {(CurrencyEUR)(usd)}"); // Явное преобразование
-            Console.WriteLine($"Неявное преобразование 100 USD в RUB: {(usd)}"); // Неявное преобразование
-    
-            CurrencyEUR eur = new CurrencyEUR(100);
-            Console.WriteLine($"Явное преобразование 100 EUR в USD: {(CurrencyUSD)(eur)}"); // Явное преобразование
-            Console.WriteLine($"Неявное преобразование 100 EUR в RUB: {(eur)}"); // Неявное преобразование
-    
-            CurrencyRUB rub = new CurrencyRUB(100);
-            Console.WriteLine($"Явное преобразование 100 RUB в USD: {(CurrencyUSD)(rub)}"); // Явное преобразование
-            Console.WriteLine($"Неявное преобразование 100 RUB в EUR: {(rub)}"); // Неявное преобразование
+            // Проход с фильтром по максимальной скорости
+            Console.WriteLine("\nFilter by Max Speed (250):");
+            foreach (var car in carCatalog.FilterByMaxSpeed(250))
+            {
+                Console.WriteLine(car);
+            }
         }
     }
-C# lab03
+C# lab04
